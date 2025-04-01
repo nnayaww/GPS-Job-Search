@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { MapPin, Search, Briefcase, Building, Calendar, Clock, Filter, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -250,7 +251,11 @@ const Jobs = () => {
                   <CardContent className="p-6">
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                       <div>
-                        <h3 className="text-xl font-semibold text-primary">{job.title}</h3>
+                        <h3 className="text-xl font-semibold text-primary">
+                          <Link to={`/jobs/${job.id}`} className="hover:underline">
+                            {job.title}
+                          </Link>
+                        </h3>
                         <div className="flex items-center mt-1 text-gray-600">
                           <Building className="h-4 w-4 mr-1" />
                           <span>{job.company}</span>
@@ -279,7 +284,9 @@ const Jobs = () => {
                   </CardContent>
                   <CardFooter className="bg-gray-50 px-6 py-3 flex justify-between">
                     <Button variant="outline">Save Job</Button>
-                    <Button>Apply Now</Button>
+                    <Button asChild>
+                      <Link to={`/jobs/${job.id}`}>View Details</Link>
+                    </Button>
                   </CardFooter>
                 </Card>
               ))}
