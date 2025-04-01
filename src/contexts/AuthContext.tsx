@@ -72,6 +72,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         setUser(userData);
         localStorage.setItem("gps_user", JSON.stringify(userData));
+      } else if (email === "admin@example.com" && password === "password") {
+        const userData: User = {
+          id: "admin1",
+          name: "David Clark",
+          email: "admin@example.com",
+          role: "admin",
+          avatar: "https://i.pravatar.cc/150?u=admin1"
+        };
+        
+        setUser(userData);
+        localStorage.setItem("gps_user", JSON.stringify(userData));
       } else {
         throw new Error("Invalid credentials");
       }

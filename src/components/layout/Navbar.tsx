@@ -4,7 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Menu, X, LogIn, UserPlus, Briefcase, Home, User } from "lucide-react";
+import { Menu, X, LogIn, UserPlus, Briefcase, Home, User, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
@@ -84,6 +84,20 @@ const Navbar = () => {
                 >
                   <User className="h-4 w-4 mr-2" />
                   Profile
+                </Link>
+              )}
+              {isAuthenticated && user?.role === "admin" && (
+                <Link 
+                  to="/admin" 
+                  className={cn(
+                    "inline-flex items-center px-3 py-2 rounded-md text-sm font-medium",
+                    isActive("/admin") 
+                      ? "bg-primary/10 text-primary" 
+                      : "text-gray-700 hover:bg-gray-100"
+                  )}
+                >
+                  <ShieldAlert className="h-4 w-4 mr-2" />
+                  Admin
                 </Link>
               )}
             </div>
@@ -183,6 +197,23 @@ const Navbar = () => {
                 <div className="flex items-center">
                   <User className="h-5 w-5 mr-2" />
                   Profile
+                </div>
+              </Link>
+            )}
+            {isAuthenticated && user?.role === "admin" && (
+              <Link 
+                to="/admin" 
+                className={cn(
+                  "block px-3 py-2 rounded-md text-base font-medium",
+                  isActive("/admin") 
+                    ? "bg-primary/10 text-primary" 
+                    : "text-gray-700 hover:bg-gray-100"
+                )}
+                onClick={closeMenu}
+              >
+                <div className="flex items-center">
+                  <ShieldAlert className="h-5 w-5 mr-2" />
+                  Admin
                 </div>
               </Link>
             )}
