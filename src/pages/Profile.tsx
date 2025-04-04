@@ -3,19 +3,25 @@ import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UploadCloud, Briefcase, BookOpen, GraduationCap, Plus, File, Award, Edit } from "lucide-react";
+import { Briefcase, BookOpen, GraduationCap, Plus, FileText, Award, Edit, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { Education, Experience } from "@/types/user";
+import ProfileEditor from "@/components/profile/ProfileEditor";
+import ProfilePicture from "@/components/profile/ProfilePicture";
+import EducationForm from "@/components/profile/EducationForm";
+import ExperienceForm from "@/components/profile/ExperienceForm";
+import ResumeUpload from "@/components/profile/ResumeUpload";
+import ApplicationsList from "@/components/profile/ApplicationsList";
+import { deleteEducation, deleteExperience, updateEducation, updateExperience } from "@/services/userService";
 
 const Profile = () => {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, updateUserState } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [educationForm, setEducationForm] = useState({ isOpen: false, isEdit: false, data: null });
+  const [experienceForm, setExperienceForm] = useState({ isOpen: false, isEdit: false, data: null });
   
   // Redirect if not authenticated
   if (isLoading) {
@@ -26,20 +32,115 @@ const Profile = () => {
     return <Navigate to="/login" />;
   }
   
-  const handleSaveProfile = () => {
+  const handleUpdateProfile = (updatedUser) => {
+    updateUserState(updatedUser);
     setIsEditing(false);
-    toast({
-      title: "Profile updated",
-      description: "Your profile information has been saved",
-    });
   };
   
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase();
+  const openAddEducationForm = () => {
+    setEducationForm({ isOpen: true, isEdit: false, data: null });
+  };
+  
+  const openEditEducationForm = (education) => {
+    setEducationForm({ isOpen: true, isEdit: true, data: education });
+  };
+  
+  const handleSaveEducation = async (educationData) => {
+    try {
+      const updatedUser = await updateEducation({ 
+        userId: user.id, 
+        education: educationData 
+      });
+      
+      updateUserState(updatedUser);
+      
+      toast({
+        title: educationForm.isEdit ? "Education updated" : "Education added",
+        description: educationForm.isEdit 
+          ? "Your education information has been updated" 
+          : "New education has been added to your profile",
+      });
+    } catch (error) {
+      console.error("Failed to save education:", error);
+      toast({
+        title: "Error",
+        description: "There was an error saving your education information",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleDeleteEducation = async (educationId) => {
+    try {
+      const updatedUser = await deleteEducation(user.id, educationId);
+      
+      updateUserState(updatedUser);
+      
+      toast({
+        title: "Education deleted",
+        description: "The education entry has been removed from your profile",
+      });
+    } catch (error) {
+      console.error("Failed to delete education:", error);
+      toast({
+        title: "Error",
+        description: "There was an error deleting your education information",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const openAddExperienceForm = () => {
+    setExperienceForm({ isOpen: true, isEdit: false, data: null });
+  };
+  
+  const openEditExperienceForm = (experience) => {
+    setExperienceForm({ isOpen: true, isEdit: true, data: experience });
+  };
+  
+  const handleSaveExperience = async (experienceData) => {
+    try {
+      const updatedUser = await updateExperience({ 
+        userId: user.id, 
+        experience: experienceData 
+      });
+      
+      updateUserState(updatedUser);
+      
+      toast({
+        title: experienceForm.isEdit ? "Experience updated" : "Experience added",
+        description: experienceForm.isEdit 
+          ? "Your work experience has been updated" 
+          : "New work experience has been added to your profile",
+      });
+    } catch (error) {
+      console.error("Failed to save experience:", error);
+      toast({
+        title: "Error",
+        description: "There was an error saving your work experience",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleDeleteExperience = async (experienceId) => {
+    try {
+      const updatedUser = await deleteExperience(user.id, experienceId);
+      
+      updateUserState(updatedUser);
+      
+      toast({
+        title: "Experience deleted",
+        description: "The work experience has been removed from your profile",
+      });
+    } catch (error) {
+      console.error("Failed to delete experience:", error);
+      toast({
+        title: "Error",
+        description: "There was an error deleting your work experience",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -60,17 +161,18 @@ const Profile = () => {
             <Card>
               <CardContent className="p-6">
                 <div className="flex flex-col items-center">
-                  <Avatar className="h-24 w-24">
-                    <AvatarImage src={user?.avatar} alt={user?.name} />
-                    <AvatarFallback>{getInitials(user?.name || "User")}</AvatarFallback>
-                  </Avatar>
+                  <ProfilePicture user={user} onUpdate={updateUserState} />
                   <h2 className="mt-4 text-xl font-semibold">{user?.name}</h2>
                   <p className="text-gray-500">{user?.email}</p>
                   <p className="mt-1 capitalize text-sm bg-primary/10 text-primary px-2 py-1 rounded-full">
                     {user?.role}
                   </p>
                   
-                  <Button className="mt-6 w-full" onClick={() => setIsEditing(true)}>
+                  <Button 
+                    className="mt-6 w-full" 
+                    onClick={() => setIsEditing(true)}
+                    disabled={isEditing}
+                  >
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Profile
                   </Button>
@@ -109,93 +211,51 @@ const Profile = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <form className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <Label htmlFor="fullName">Full Name</Label>
-                          <Input 
-                            id="fullName" 
-                            defaultValue={user?.name}
-                            disabled={!isEditing}
-                          />
+                    {isEditing ? (
+                      <ProfileEditor 
+                        user={user} 
+                        onUpdate={handleUpdateProfile}
+                        onCancel={() => setIsEditing(false)} 
+                      />
+                    ) : (
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground">Full Name</h3>
+                            <p className="mt-1">{user?.name}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground">Email</h3>
+                            <p className="mt-1">{user?.email}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground">Phone Number</h3>
+                            <p className="mt-1">{user?.phoneNumber || "Not specified"}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground">Location</h3>
+                            <p className="mt-1">{user?.location || "Not specified"}</p>
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="email">Email</Label>
-                          <Input 
-                            id="email" 
-                            type="email" 
-                            defaultValue={user?.email}
-                            disabled={!isEditing}
-                          />
+                        
+                        <div>
+                          <h3 className="text-sm font-medium text-muted-foreground">Professional Headline</h3>
+                          <p className="mt-1">{user?.headline || "Not specified"}</p>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="phone">Phone Number</Label>
-                          <Input 
-                            id="phone" 
-                            defaultValue="+1 (555) 123-4567"
-                            disabled={!isEditing}
-                          />
+                        
+                        <div>
+                          <h3 className="text-sm font-medium text-muted-foreground">About Me</h3>
+                          <p className="mt-1">{user?.bio || "No bio provided"}</p>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="location">Location</Label>
-                          <Input 
-                            id="location" 
-                            defaultValue="San Francisco, CA"
-                            disabled={!isEditing}
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="headline">Professional Headline</Label>
-                        <Input 
-                          id="headline" 
-                          defaultValue="Computer Science Graduate | Web Developer"
-                          disabled={!isEditing}
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="about">About Me</Label>
-                        <Textarea 
-                          id="about" 
-                          rows={5}
-                          defaultValue="Recent computer science graduate with a passion for web development and UX design. Looking for opportunities to grow my skills in a dynamic team environment."
-                          disabled={!isEditing}
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="resume">Resume/CV</Label>
-                        <div className="flex items-center gap-4">
-                          <Button variant="outline" className="w-full">
-                            <UploadCloud className="h-4 w-4 mr-2" />
-                            Upload Resume
-                            <Input 
-                              id="resume" 
-                              type="file" 
-                              className="hidden"
-                              disabled={!isEditing}
-                            />
-                          </Button>
-                          <Button variant="outline" className="flex-shrink-0">
-                            <File className="h-4 w-4 mr-2" />
-                            View Current
-                          </Button>
+                        
+                        <div>
+                          <h3 className="text-sm font-medium text-muted-foreground">Resume/CV</h3>
+                          <div className="mt-2">
+                            <ResumeUpload user={user} onUpdate={updateUserState} />
+                          </div>
                         </div>
                       </div>
-                      
-                      {isEditing && (
-                        <div className="flex justify-end gap-4">
-                          <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
-                            Cancel
-                          </Button>
-                          <Button type="button" onClick={handleSaveProfile}>
-                            Save Changes
-                          </Button>
-                        </div>
-                      )}
-                    </form>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -209,57 +269,56 @@ const Profile = () => {
                         Add your education history and qualifications
                       </CardDescription>
                     </div>
-                    <Button size="sm">
+                    <Button size="sm" onClick={openAddEducationForm}>
                       <Plus className="h-4 w-4 mr-2" />
                       Add Education
                     </Button>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-6">
-                      <div className="flex gap-4">
-                        <div className="flex-shrink-0 mt-1">
-                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <GraduationCap className="h-5 w-5 text-primary" />
+                      {user?.education && user.education.length > 0 ? (
+                        user.education.map((education) => (
+                          <div key={education.id} className="flex gap-4">
+                            <div className="flex-shrink-0 mt-1">
+                              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <GraduationCap className="h-5 w-5 text-primary" />
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-lg font-medium">{education.institution}</h3>
+                              <p className="text-gray-500">{education.degree} in {education.field}</p>
+                              <p className="text-sm text-gray-500 mt-1">
+                                {education.startDate && education.startDate.substring(0, 7)} - {education.endDate && education.endDate.substring(0, 7)}
+                              </p>
+                              {education.description && <p className="mt-2">{education.description}</p>}
+                            </div>
+                            <div className="flex-shrink-0 flex gap-2">
+                              <Button variant="ghost" size="sm" onClick={() => openEditEducationForm(education)}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeleteEducation(education.id)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-4">
+                          <BookOpen className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                          <p className="mt-2 text-muted-foreground">No education entries yet. Add your educational background.</p>
                         </div>
-                        <div className="flex-1">
-                          <h3 className="text-lg font-medium">University of California, Berkeley</h3>
-                          <p className="text-gray-500">Bachelor of Science in Computer Science</p>
-                          <p className="text-sm text-gray-500 mt-1">2019 - 2023</p>
-                          <p className="mt-2">
-                            Graduated with honors. Coursework included Data Structures, Algorithms, Database Systems, and Web Development.
-                          </p>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-4">
-                        <div className="flex-shrink-0 mt-1">
-                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <BookOpen className="h-5 w-5 text-primary" />
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-lg font-medium">Udemy</h3>
-                          <p className="text-gray-500">React & Node.js Development Bootcamp</p>
-                          <p className="text-sm text-gray-500 mt-1">2022</p>
-                          <p className="mt-2">
-                            Intensive online course covering full-stack development with React and Node.js.
-                          </p>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
+                
+                <EducationForm 
+                  isOpen={educationForm.isOpen} 
+                  onClose={() => setEducationForm({ ...educationForm, isOpen: false })}
+                  onSave={handleSaveEducation}
+                  initialData={educationForm.data}
+                  isEdit={educationForm.isEdit}
+                />
               </TabsContent>
               
               <TabsContent value="experience" className="mt-6">
@@ -271,61 +330,56 @@ const Profile = () => {
                         Add your work history and internships
                       </CardDescription>
                     </div>
-                    <Button size="sm">
+                    <Button size="sm" onClick={openAddExperienceForm}>
                       <Plus className="h-4 w-4 mr-2" />
                       Add Experience
                     </Button>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-6">
-                      <div className="flex gap-4">
-                        <div className="flex-shrink-0 mt-1">
-                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Briefcase className="h-5 w-5 text-primary" />
+                      {user?.experience && user.experience.length > 0 ? (
+                        user.experience.map((experience) => (
+                          <div key={experience.id} className="flex gap-4">
+                            <div className="flex-shrink-0 mt-1">
+                              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Briefcase className="h-5 w-5 text-primary" />
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-lg font-medium">{experience.company}</h3>
+                              <p className="text-gray-500">{experience.position}</p>
+                              <p className="text-sm text-gray-500 mt-1">
+                                {experience.startDate && experience.startDate.substring(0, 7)} - {experience.current ? "Present" : (experience.endDate && experience.endDate.substring(0, 7))}
+                              </p>
+                              {experience.description && <p className="mt-2">{experience.description}</p>}
+                            </div>
+                            <div className="flex-shrink-0 flex gap-2">
+                              <Button variant="ghost" size="sm" onClick={() => openEditExperienceForm(experience)}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeleteExperience(experience.id)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-4">
+                          <Briefcase className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                          <p className="mt-2 text-muted-foreground">No work experience entries yet. Add your professional experience.</p>
                         </div>
-                        <div className="flex-1">
-                          <h3 className="text-lg font-medium">TechStart Inc.</h3>
-                          <p className="text-gray-500">Frontend Developer Intern</p>
-                          <p className="text-sm text-gray-500 mt-1">Jun 2022 - Aug 2022</p>
-                          <p className="mt-2">
-                            Worked on developing user interfaces using React and TypeScript.
-                            Collaborated with designers to implement pixel-perfect designs.
-                            Participated in code reviews and agile development processes.
-                          </p>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-4">
-                        <div className="flex-shrink-0 mt-1">
-                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Award className="h-5 w-5 text-primary" />
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-lg font-medium">Berkeley Computer Science Club</h3>
-                          <p className="text-gray-500">Web Development Team Lead</p>
-                          <p className="text-sm text-gray-500 mt-1">Sep 2021 - May 2023</p>
-                          <p className="mt-2">
-                            Led a team of 5 student developers in redesigning the club's website.
-                            Implemented a new content management system and improved site performance.
-                            Organized workshops to teach web development basics to club members.
-                          </p>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
+                
+                <ExperienceForm 
+                  isOpen={experienceForm.isOpen} 
+                  onClose={() => setExperienceForm({ ...experienceForm, isOpen: false })}
+                  onSave={handleSaveExperience}
+                  initialData={experienceForm.data}
+                  isEdit={experienceForm.isEdit}
+                />
               </TabsContent>
               
               <TabsContent value="applications" className="mt-6">
@@ -338,46 +392,7 @@ const Profile = () => {
                   </CardHeader>
                   <CardContent>
                     {user?.role === "student" ? (
-                      <div className="space-y-4">
-                        <div className="rounded-md border p-4">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h3 className="font-medium">Software Engineer</h3>
-                              <p className="text-gray-500">TechCorp Solutions</p>
-                              <p className="text-sm text-gray-500">Applied on: April 15, 2023</p>
-                            </div>
-                            <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">
-                              In Review
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="rounded-md border p-4">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h3 className="font-medium">UX/UI Designer</h3>
-                              <p className="text-gray-500">Creative Solutions</p>
-                              <p className="text-sm text-gray-500">Applied on: April 10, 2023</p>
-                            </div>
-                            <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                              Interview Scheduled
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="rounded-md border p-4">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h3 className="font-medium">Frontend Developer</h3>
-                              <p className="text-gray-500">WebTech Inc.</p>
-                              <p className="text-sm text-gray-500">Applied on: April 5, 2023</p>
-                            </div>
-                            <div className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm">
-                              Not Selected
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <ApplicationsList user={user} />
                     ) : (
                       <div className="space-y-4">
                         <div className="rounded-md border p-4">

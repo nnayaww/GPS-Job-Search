@@ -9,6 +9,10 @@ export interface User {
   avatar?: string;
   bio?: string;
   location?: string;
+  phoneNumber?: string;
+  headline?: string;
+  resume?: string;
+  resumeUpdated?: string;
   skills?: string[];
   education?: Education[];
   experience?: Experience[];
