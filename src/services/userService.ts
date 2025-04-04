@@ -401,10 +401,10 @@ export const getUserApplications = async (userId: number): Promise<Application[]
   await new Promise(resolve => setTimeout(resolve, 700));
   
   // Mock applications data - in a real app, this would come from an API
-  return [
+  const allApplications = [
     {
       id: 1,
-      userId,
+      userId: 1,
       jobId: 101,
       jobTitle: "Software Engineer",
       company: "TechCorp Solutions",
@@ -414,7 +414,7 @@ export const getUserApplications = async (userId: number): Promise<Application[]
     },
     {
       id: 2,
-      userId,
+      userId: 1,
       jobId: 102,
       jobTitle: "UX/UI Designer",
       company: "Creative Solutions",
@@ -425,15 +425,28 @@ export const getUserApplications = async (userId: number): Promise<Application[]
     },
     {
       id: 3,
-      userId,
+      userId: 1,
       jobId: 103,
       jobTitle: "Frontend Developer",
       company: "WebTech Inc.",
       appliedDate: "2023-04-05T09:15:00Z",
       status: "Not Selected",
       notes: "Position was filled internally"
+    },
+    {
+      id: 4,
+      userId: 2,
+      jobId: 104,
+      jobTitle: "HR Manager",
+      company: "Tech Innovations",
+      appliedDate: "2023-04-12T08:20:00Z",
+      status: "Pending",
+      notes: ""
     }
   ];
+  
+  // Filter applications for the specified user
+  return allApplications.filter(app => app.userId === userId);
 };
 
 // Search for jobs API

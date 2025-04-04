@@ -1,18 +1,12 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: "student" | "employer" | "admin";
-  avatar?: string;
-}
+import { User } from "@/types/user";
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  updateUserState: (updatedUser: User) => void;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   register: (name: string, email: string, password: string, role: "student" | "employer") => Promise<void>;
@@ -41,6 +35,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
+  const updateUserState = (updatedUser: User) => {
+    setUser(updatedUser);
+    localStorage.setItem("gps_user", JSON.stringify(updatedUser));
+  };
+
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     
@@ -52,33 +51,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // In a real app, this would be an API call to your backend
       if (email === "student@example.com" && password === "password") {
         const userData: User = {
-          id: "user1",
+          id: 1,
           name: "Alex Johnson",
           email: "student@example.com",
           role: "student",
-          avatar: "https://i.pravatar.cc/150?u=user1"
+          status: "active",
+          joined: new Date().toISOString(),
+          avatar: "https://i.pravatar.cc/150?u=user1",
+          bio: "Computer Science graduate with a passion for web development.",
+          location: "San Francisco, CA",
+          skills: ["JavaScript", "React", "Node.js"],
+          phoneNumber: "555-123-4567",
+          headline: "Software Engineer"
         };
         
         setUser(userData);
         localStorage.setItem("gps_user", JSON.stringify(userData));
       } else if (email === "employer@example.com" && password === "password") {
         const userData: User = {
-          id: "user2",
+          id: 2,
           name: "Sarah Miller",
           email: "employer@example.com",
           role: "employer",
-          avatar: "https://i.pravatar.cc/150?u=user2"
+          status: "active",
+          joined: new Date().toISOString(),
+          avatar: "https://i.pravatar.cc/150?u=user2",
+          bio: "HR Manager at TechCorp Solutions",
+          location: "New York, NY"
         };
         
         setUser(userData);
         localStorage.setItem("gps_user", JSON.stringify(userData));
       } else if (email === "admin@example.com" && password === "password") {
         const userData: User = {
-          id: "admin1",
+          id: 3,
           name: "David Clark",
           email: "admin@example.com",
           role: "admin",
-          avatar: "https://i.pravatar.cc/150?u=admin1"
+          status: "active",
+          joined: new Date().toISOString(),
+          avatar: "https://i.pravatar.cc/150?u=admin1",
+          bio: "System Administrator and Developer",
+          location: "Boston, MA"
         };
         
         setUser(userData);
@@ -103,10 +117,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // For demo purposes, create a new user
       // In a real app, this would be an API call to your backend
       const userData: User = {
-        id: `user${Math.floor(Math.random() * 1000)}`,
+        id: Math.floor(Math.random() * 1000),
         name,
         email,
         role,
+        status: "active",
+        joined: new Date().toISOString(),
         avatar: `https://i.pravatar.cc/150?u=${email}`
       };
       
@@ -130,6 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         isLoading,
         isAuthenticated: !!user,
+        updateUserState,
         login,
         logout,
         register

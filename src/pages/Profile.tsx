@@ -20,15 +20,15 @@ const Profile = () => {
   const { user, isAuthenticated, isLoading, updateUserState } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
-  const [educationForm, setEducationForm] = useState({ isOpen: false, isEdit: false, data: null });
-  const [experienceForm, setExperienceForm] = useState({ isOpen: false, isEdit: false, data: null });
+  const [educationForm, setEducationForm] = useState({ isOpen: false, isEdit: false, data: null as Education | null });
+  const [experienceForm, setExperienceForm] = useState({ isOpen: false, isEdit: false, data: null as Experience | null });
   
   // Redirect if not authenticated
   if (isLoading) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
   }
   
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
     return <Navigate to="/login" />;
   }
   
@@ -41,11 +41,11 @@ const Profile = () => {
     setEducationForm({ isOpen: true, isEdit: false, data: null });
   };
   
-  const openEditEducationForm = (education) => {
+  const openEditEducationForm = (education: Education) => {
     setEducationForm({ isOpen: true, isEdit: true, data: education });
   };
   
-  const handleSaveEducation = async (educationData) => {
+  const handleSaveEducation = async (educationData: Education) => {
     try {
       const updatedUser = await updateEducation({ 
         userId: user.id, 
@@ -60,6 +60,8 @@ const Profile = () => {
           ? "Your education information has been updated" 
           : "New education has been added to your profile",
       });
+      
+      setEducationForm({ isOpen: false, isEdit: false, data: null });
     } catch (error) {
       console.error("Failed to save education:", error);
       toast({
@@ -70,7 +72,7 @@ const Profile = () => {
     }
   };
   
-  const handleDeleteEducation = async (educationId) => {
+  const handleDeleteEducation = async (educationId: number) => {
     try {
       const updatedUser = await deleteEducation(user.id, educationId);
       
@@ -94,11 +96,11 @@ const Profile = () => {
     setExperienceForm({ isOpen: true, isEdit: false, data: null });
   };
   
-  const openEditExperienceForm = (experience) => {
+  const openEditExperienceForm = (experience: Experience) => {
     setExperienceForm({ isOpen: true, isEdit: true, data: experience });
   };
   
-  const handleSaveExperience = async (experienceData) => {
+  const handleSaveExperience = async (experienceData: Experience) => {
     try {
       const updatedUser = await updateExperience({ 
         userId: user.id, 
@@ -113,6 +115,8 @@ const Profile = () => {
           ? "Your work experience has been updated" 
           : "New work experience has been added to your profile",
       });
+      
+      setExperienceForm({ isOpen: false, isEdit: false, data: null });
     } catch (error) {
       console.error("Failed to save experience:", error);
       toast({
@@ -123,7 +127,7 @@ const Profile = () => {
     }
   };
   
-  const handleDeleteExperience = async (experienceId) => {
+  const handleDeleteExperience = async (experienceId: number) => {
     try {
       const updatedUser = await deleteExperience(user.id, experienceId);
       
@@ -162,10 +166,10 @@ const Profile = () => {
               <CardContent className="p-6">
                 <div className="flex flex-col items-center">
                   <ProfilePicture user={user} onUpdate={updateUserState} />
-                  <h2 className="mt-4 text-xl font-semibold">{user?.name}</h2>
-                  <p className="text-gray-500">{user?.email}</p>
+                  <h2 className="mt-4 text-xl font-semibold">{user.name}</h2>
+                  <p className="text-gray-500">{user.email}</p>
                   <p className="mt-1 capitalize text-sm bg-primary/10 text-primary px-2 py-1 rounded-full">
-                    {user?.role}
+                    {user.role}
                   </p>
                   
                   <Button 
@@ -222,30 +226,30 @@ const Profile = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div>
                             <h3 className="text-sm font-medium text-muted-foreground">Full Name</h3>
-                            <p className="mt-1">{user?.name}</p>
+                            <p className="mt-1">{user.name}</p>
                           </div>
                           <div>
                             <h3 className="text-sm font-medium text-muted-foreground">Email</h3>
-                            <p className="mt-1">{user?.email}</p>
+                            <p className="mt-1">{user.email}</p>
                           </div>
                           <div>
                             <h3 className="text-sm font-medium text-muted-foreground">Phone Number</h3>
-                            <p className="mt-1">{user?.phoneNumber || "Not specified"}</p>
+                            <p className="mt-1">{user.phoneNumber || "Not specified"}</p>
                           </div>
                           <div>
                             <h3 className="text-sm font-medium text-muted-foreground">Location</h3>
-                            <p className="mt-1">{user?.location || "Not specified"}</p>
+                            <p className="mt-1">{user.location || "Not specified"}</p>
                           </div>
                         </div>
                         
                         <div>
                           <h3 className="text-sm font-medium text-muted-foreground">Professional Headline</h3>
-                          <p className="mt-1">{user?.headline || "Not specified"}</p>
+                          <p className="mt-1">{user.headline || "Not specified"}</p>
                         </div>
                         
                         <div>
                           <h3 className="text-sm font-medium text-muted-foreground">About Me</h3>
-                          <p className="mt-1">{user?.bio || "No bio provided"}</p>
+                          <p className="mt-1">{user.bio || "No bio provided"}</p>
                         </div>
                         
                         <div>
@@ -276,7 +280,7 @@ const Profile = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-6">
-                      {user?.education && user.education.length > 0 ? (
+                      {user.education && user.education.length > 0 ? (
                         user.education.map((education) => (
                           <div key={education.id} className="flex gap-4">
                             <div className="flex-shrink-0 mt-1">
@@ -337,7 +341,7 @@ const Profile = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-6">
-                      {user?.experience && user.experience.length > 0 ? (
+                      {user.experience && user.experience.length > 0 ? (
                         user.experience.map((experience) => (
                           <div key={experience.id} className="flex gap-4">
                             <div className="flex-shrink-0 mt-1">
@@ -391,7 +395,7 @@ const Profile = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {user?.role === "student" ? (
+                    {user.role === "student" ? (
                       <ApplicationsList user={user} />
                     ) : (
                       <div className="space-y-4">
