@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Briefcase, BookOpen, GraduationCap, Plus, FileText, Award, Edit, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Education, Experience } from "@/types/user";
+import { Education, Experience, User } from "@/types/user";
 import ProfileEditor from "@/components/profile/ProfileEditor";
 import ProfilePicture from "@/components/profile/ProfilePicture";
 import EducationForm from "@/components/profile/EducationForm";
@@ -31,8 +31,39 @@ const Profile = () => {
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" />;
   }
+
+  // Calculate profile completion percentage
+  const calculateProfileCompletion = (user: User): number => {
+    let totalFields = 0;
+    let completedFields = 0;
+    
+    // Basic profile fields
+    const basicFields = ['name', 'email', 'bio', 'location', 'phoneNumber', 'headline', 'avatar'];
+    totalFields += basicFields.length;
+    
+    for (const field of basicFields) {
+      if (user[field as keyof User]) completedFields++;
+    }
+    
+    // Education
+    totalFields += 1; // Count education as 1 field
+    if (user.education && user.education.length > 0) completedFields += 1;
+    
+    // Experience
+    totalFields += 1; // Count experience as 1 field
+    if (user.experience && user.experience.length > 0) completedFields += 1;
+    
+    // Resume
+    totalFields += 1;
+    if (user.resume) completedFields += 1;
+    
+    const completionPercentage = Math.round((completedFields / totalFields) * 100);
+    return completionPercentage;
+  };
   
-  const handleUpdateProfile = (updatedUser) => {
+  const profileCompletionPercentage = calculateProfileCompletion(user);
+  
+  const handleUpdateProfile = (updatedUser: User) => {
     updateUserState(updatedUser);
     setIsEditing(false);
   };
@@ -147,13 +178,34 @@ const Profile = () => {
     }
   };
 
+  // Show different content for employers vs students
+  const renderRoleSpecificTabs = () => {
+    if (user.role === 'employer') {
+      return (
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="personal">Personal Info</TabsTrigger>
+          <TabsTrigger value="jobs">Posted Jobs</TabsTrigger>
+        </TabsList>
+      );
+    }
+    
+    return (
+      <TabsList className="grid w-full grid-cols-4">
+        <TabsTrigger value="personal">Personal Info</TabsTrigger>
+        <TabsTrigger value="education">Education</TabsTrigger>
+        <TabsTrigger value="experience">Experience</TabsTrigger>
+        <TabsTrigger value="applications">Applications</TabsTrigger>
+      </TabsList>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-primary py-8">
         <div className="container mx-auto px-4">
           <h1 className="text-3xl font-bold text-white">My Profile</h1>
           <p className="text-primary-foreground mt-2">
-            Manage your personal information and application settings
+            Manage your personal information and {user.role === 'employer' ? 'job postings' : 'application settings'}
           </p>
         </div>
       </div>
@@ -185,11 +237,14 @@ const Profile = () => {
                 <div className="mt-8">
                   <h3 className="font-medium mb-4">Profile Completion</h3>
                   <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div className="bg-primary h-2.5 rounded-full w-[65%]"></div>
+                    <div 
+                      className="bg-primary h-2.5 rounded-full" 
+                      style={{ width: `${profileCompletionPercentage}%` }}
+                    ></div>
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">65% complete</p>
+                  <p className="text-sm text-gray-500 mt-2">{profileCompletionPercentage}% complete</p>
                   <p className="text-sm mt-2">
-                    Complete your profile to increase your chances of finding the perfect opportunity.
+                    Complete your profile to increase your chances of {user.role === 'employer' ? 'finding the right candidates' : 'finding the perfect opportunity'}.
                   </p>
                 </div>
               </CardContent>
@@ -199,12 +254,7 @@ const Profile = () => {
           {/* Main content */}
           <div className="flex-1">
             <Tabs defaultValue="personal">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="personal">Personal Info</TabsTrigger>
-                <TabsTrigger value="education">Education</TabsTrigger>
-                <TabsTrigger value="experience">Experience</TabsTrigger>
-                <TabsTrigger value="applications">Applications</TabsTrigger>
-              </TabsList>
+              {renderRoleSpecificTabs()}
               
               <TabsContent value="personal" className="mt-6">
                 <Card>
@@ -252,152 +302,176 @@ const Profile = () => {
                           <p className="mt-1">{user.bio || "No bio provided"}</p>
                         </div>
                         
-                        <div>
-                          <h3 className="text-sm font-medium text-muted-foreground">Resume/CV</h3>
-                          <div className="mt-2">
-                            <ResumeUpload user={user} onUpdate={updateUserState} />
+                        {user.role === "student" && (
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground">Resume/CV</h3>
+                            <div className="mt-2">
+                              <ResumeUpload user={user} onUpdate={updateUserState} />
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                     )}
                   </CardContent>
                 </Card>
               </TabsContent>
               
-              <TabsContent value="education" className="mt-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle>Education</CardTitle>
-                      <CardDescription>
-                        Add your education history and qualifications
-                      </CardDescription>
-                    </div>
-                    <Button size="sm" onClick={openAddEducationForm}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Education
-                    </Button>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      {user.education && user.education.length > 0 ? (
-                        user.education.map((education) => (
-                          <div key={education.id} className="flex gap-4">
-                            <div className="flex-shrink-0 mt-1">
-                              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                <GraduationCap className="h-5 w-5 text-primary" />
-                              </div>
-                            </div>
-                            <div className="flex-1">
-                              <h3 className="text-lg font-medium">{education.institution}</h3>
-                              <p className="text-gray-500">{education.degree} in {education.field}</p>
-                              <p className="text-sm text-gray-500 mt-1">
-                                {education.startDate && education.startDate.substring(0, 7)} - {education.endDate && education.endDate.substring(0, 7)}
-                              </p>
-                              {education.description && <p className="mt-2">{education.description}</p>}
-                            </div>
-                            <div className="flex-shrink-0 flex gap-2">
-                              <Button variant="ghost" size="sm" onClick={() => openEditEducationForm(education)}>
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeleteEducation(education.id)}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-4">
-                          <BookOpen className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                          <p className="mt-2 text-muted-foreground">No education entries yet. Add your educational background.</p>
+              {user.role === "student" && (
+                <>
+                  <TabsContent value="education" className="mt-6">
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                          <CardTitle>Education</CardTitle>
+                          <CardDescription>
+                            Add your education history and qualifications
+                          </CardDescription>
                         </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <EducationForm 
-                  isOpen={educationForm.isOpen} 
-                  onClose={() => setEducationForm({ ...educationForm, isOpen: false })}
-                  onSave={handleSaveEducation}
-                  initialData={educationForm.data}
-                  isEdit={educationForm.isEdit}
-                />
-              </TabsContent>
-              
-              <TabsContent value="experience" className="mt-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle>Work Experience</CardTitle>
-                      <CardDescription>
-                        Add your work history and internships
-                      </CardDescription>
-                    </div>
-                    <Button size="sm" onClick={openAddExperienceForm}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Experience
-                    </Button>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      {user.experience && user.experience.length > 0 ? (
-                        user.experience.map((experience) => (
-                          <div key={experience.id} className="flex gap-4">
-                            <div className="flex-shrink-0 mt-1">
-                              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Briefcase className="h-5 w-5 text-primary" />
+                        <Button size="sm" onClick={openAddEducationForm}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Education
+                        </Button>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-6">
+                          {user.education && user.education.length > 0 ? (
+                            user.education.map((education) => (
+                              <div key={education.id} className="flex gap-4">
+                                <div className="flex-shrink-0 mt-1">
+                                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <GraduationCap className="h-5 w-5 text-primary" />
+                                  </div>
+                                </div>
+                                <div className="flex-1">
+                                  <h3 className="text-lg font-medium">{education.institution}</h3>
+                                  <p className="text-gray-500">{education.degree} in {education.field}</p>
+                                  <p className="text-sm text-gray-500 mt-1">
+                                    {education.startDate && education.startDate.substring(0, 7)} - {education.endDate && education.endDate.substring(0, 7)}
+                                  </p>
+                                  {education.description && <p className="mt-2">{education.description}</p>}
+                                </div>
+                                <div className="flex-shrink-0 flex gap-2">
+                                  <Button variant="ghost" size="sm" onClick={() => openEditEducationForm(education)}>
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeleteEducation(education.id)}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </div>
+                            ))
+                          ) : (
+                            <div className="text-center py-4">
+                              <BookOpen className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                              <p className="mt-2 text-muted-foreground">No education entries yet. Add your educational background.</p>
                             </div>
-                            <div className="flex-1">
-                              <h3 className="text-lg font-medium">{experience.company}</h3>
-                              <p className="text-gray-500">{experience.position}</p>
-                              <p className="text-sm text-gray-500 mt-1">
-                                {experience.startDate && experience.startDate.substring(0, 7)} - {experience.current ? "Present" : (experience.endDate && experience.endDate.substring(0, 7))}
-                              </p>
-                              {experience.description && <p className="mt-2">{experience.description}</p>}
-                            </div>
-                            <div className="flex-shrink-0 flex gap-2">
-                              <Button variant="ghost" size="sm" onClick={() => openEditExperienceForm(experience)}>
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeleteExperience(experience.id)}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-4">
-                          <Briefcase className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                          <p className="mt-2 text-muted-foreground">No work experience entries yet. Add your professional experience.</p>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <ExperienceForm 
-                  isOpen={experienceForm.isOpen} 
-                  onClose={() => setExperienceForm({ ...experienceForm, isOpen: false })}
-                  onSave={handleSaveExperience}
-                  initialData={experienceForm.data}
-                  isEdit={experienceForm.isEdit}
-                />
-              </TabsContent>
+                      </CardContent>
+                    </Card>
+                    
+                    <EducationForm 
+                      isOpen={educationForm.isOpen} 
+                      onClose={() => setEducationForm({ ...educationForm, isOpen: false })}
+                      onSave={handleSaveEducation}
+                      initialData={educationForm.data}
+                      isEdit={educationForm.isEdit}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="experience" className="mt-6">
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                          <CardTitle>Work Experience</CardTitle>
+                          <CardDescription>
+                            Add your work history and internships
+                          </CardDescription>
+                        </div>
+                        <Button size="sm" onClick={openAddExperienceForm}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Experience
+                        </Button>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-6">
+                          {user.experience && user.experience.length > 0 ? (
+                            user.experience.map((experience) => (
+                              <div key={experience.id} className="flex gap-4">
+                                <div className="flex-shrink-0 mt-1">
+                                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <Briefcase className="h-5 w-5 text-primary" />
+                                  </div>
+                                </div>
+                                <div className="flex-1">
+                                  <h3 className="text-lg font-medium">{experience.company}</h3>
+                                  <p className="text-gray-500">{experience.position}</p>
+                                  <p className="text-sm text-gray-500 mt-1">
+                                    {experience.startDate && experience.startDate.substring(0, 7)} - {experience.current ? "Present" : (experience.endDate && experience.endDate.substring(0, 7))}
+                                  </p>
+                                  {experience.description && <p className="mt-2">{experience.description}</p>}
+                                </div>
+                                <div className="flex-shrink-0 flex gap-2">
+                                  <Button variant="ghost" size="sm" onClick={() => openEditExperienceForm(experience)}>
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeleteExperience(experience.id)}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-center py-4">
+                              <Briefcase className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                              <p className="mt-2 text-muted-foreground">No work experience entries yet. Add your professional experience.</p>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <ExperienceForm 
+                      isOpen={experienceForm.isOpen} 
+                      onClose={() => setExperienceForm({ ...experienceForm, isOpen: false })}
+                      onSave={handleSaveExperience}
+                      initialData={experienceForm.data}
+                      isEdit={experienceForm.isEdit}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="applications" className="mt-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Job Applications</CardTitle>
+                        <CardDescription>
+                          Track the status of your job applications
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <ApplicationsList user={user} />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </>
+              )}
               
-              <TabsContent value="applications" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Job Applications</CardTitle>
-                    <CardDescription>
-                      Track the status of your job applications
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {user.role === "student" ? (
-                      <ApplicationsList user={user} />
-                    ) : (
+              {user.role === "employer" && (
+                <TabsContent value="jobs" className="mt-6">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <div>
+                        <CardTitle>Posted Jobs</CardTitle>
+                        <CardDescription>
+                          Manage your job listings and view applications
+                        </CardDescription>
+                      </div>
+                      <Button size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Post New Job
+                      </Button>
+                    </CardHeader>
+                    <CardContent>
                       <div className="space-y-4">
                         <div className="rounded-md border p-4">
                           <div className="flex justify-between items-start">
@@ -425,10 +499,10 @@ const Profile = () => {
                           </div>
                         </div>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              )}
             </Tabs>
           </div>
         </div>

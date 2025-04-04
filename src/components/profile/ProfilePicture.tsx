@@ -14,6 +14,7 @@ interface ProfilePictureProps {
 
 const ProfilePicture = ({ user, onUpdate }: ProfilePictureProps) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [imageKey, setImageKey] = useState(Date.now()); // Add a key for forcing image refresh
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -50,7 +51,8 @@ const ProfilePicture = ({ user, onUpdate }: ProfilePictureProps) => {
         avatarFile: file
       });
       
-      // Update the local state
+      // Update the local state and force image refresh
+      setImageKey(Date.now());
       onUpdate(updatedUser);
       
       toast({
@@ -85,7 +87,14 @@ const ProfilePicture = ({ user, onUpdate }: ProfilePictureProps) => {
     <div className="flex flex-col items-center">
       <div className="relative group">
         <Avatar className="h-24 w-24 border-4 border-white shadow-md">
-          <AvatarImage src={user.avatar} alt={user.name} />
+          {user.avatar ? (
+            <AvatarImage 
+              src={`${user.avatar}${user.avatar.includes('?') ? '&' : '?'}t=${imageKey}`} 
+              alt={user.name} 
+            />
+          ) : (
+            <AvatarImage src="" alt={user.name} />
+          )}
           <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
         </Avatar>
         

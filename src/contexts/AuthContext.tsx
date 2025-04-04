@@ -30,7 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check for stored user data on mount
     const storedUser = localStorage.getItem("gps_user");
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      setUser(JSON.parse(storedUser) as User);
     }
     setIsLoading(false);
   }, []);
@@ -54,8 +54,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: 1,
           name: "Alex Johnson",
           email: "student@example.com",
-          role: "student",
-          status: "active",
+          role: "student" as const,
+          status: "active" as const,
           joined: new Date().toISOString(),
           avatar: "https://i.pravatar.cc/150?u=user1",
           bio: "Computer Science graduate with a passion for web development.",
@@ -72,8 +72,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: 2,
           name: "Sarah Miller",
           email: "employer@example.com",
-          role: "employer",
-          status: "active",
+          role: "employer" as const,
+          status: "active" as const,
           joined: new Date().toISOString(),
           avatar: "https://i.pravatar.cc/150?u=user2",
           bio: "HR Manager at TechCorp Solutions",
@@ -87,8 +87,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: 3,
           name: "David Clark",
           email: "admin@example.com",
-          role: "admin",
-          status: "active",
+          role: "admin" as const,
+          status: "active" as const,
           joined: new Date().toISOString(),
           avatar: "https://i.pravatar.cc/150?u=admin1",
           bio: "System Administrator and Developer",
@@ -121,7 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name,
         email,
         role, // Make sure we use the role parameter passed to the function
-        status: "active",
+        status: "active" as const,
         joined: new Date().toISOString(),
         avatar: `https://i.pravatar.cc/150?u=${email}`
       };

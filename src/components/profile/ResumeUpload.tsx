@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import { User } from '@/types/user';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, FileText, Trash2 } from 'lucide-react';
+import { UploadCloud, FileText, Trash2, ExternalLink } from 'lucide-react';
 import { uploadResume, deleteResume } from '@/services/userService';
 
 interface ResumeUploadProps {
@@ -98,18 +98,26 @@ const ResumeUpload = ({ user, onUpdate }: ResumeUploadProps) => {
     fileInputRef.current?.click();
   };
 
+  // Since we can't access the actual file directly in this demo app,
+  // we'll simulate opening a new window with the resume URL
   const handleViewResume = () => {
     if (user.resume) {
-      window.open(user.resume, '_blank');
+      window.open(user.resume, '_blank', 'noopener,noreferrer');
+      
+      // For demo purpose, show a toast that explains what would happen in a real app
+      toast({
+        title: "Resume Viewer",
+        description: "In a production app, this would open your actual uploaded resume",
+      });
     }
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <Button 
           variant="outline" 
-          className="w-full"
+          className="flex-grow"
           onClick={handleButtonClick}
           disabled={isUploading}
         >
@@ -133,7 +141,7 @@ const ResumeUpload = ({ user, onUpdate }: ResumeUploadProps) => {
               className="flex-shrink-0"
               onClick={handleViewResume}
             >
-              <FileText className="h-4 w-4 mr-2" />
+              <ExternalLink className="h-4 w-4 mr-2" />
               View
             </Button>
             
