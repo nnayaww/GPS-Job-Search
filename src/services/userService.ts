@@ -73,7 +73,7 @@ export const fetchUsers = async (): Promise<User[]> => {
   let currentUser: User | null = null;
 
   if (storedUser) {
-    currentUser = JSON.parse(storedUser);
+    currentUser = JSON.parse(storedUser) as User;
   }
   
   // For demo purposes, return mock data
@@ -179,7 +179,7 @@ export const updateUserStatus = async ({ userId, status }: UpdateUserStatusReque
   // First check if this is our current user
   const storedUser = localStorage.getItem("gps_user");
   if (storedUser) {
-    const currentUser = JSON.parse(storedUser);
+    const currentUser = JSON.parse(storedUser) as User;
     if (currentUser.id === userId) {
       const updatedUser: User = {
         ...currentUser,
@@ -211,7 +211,7 @@ export const updateUserRole = async ({ userId, role }: UpdateUserRoleRequest): P
   // First check if this is our current user
   const storedUser = localStorage.getItem("gps_user");
   if (storedUser) {
-    const currentUser = JSON.parse(storedUser);
+    const currentUser = JSON.parse(storedUser) as User;
     if (currentUser.id === userId) {
       const updatedUser: User = {
         ...currentUser,
@@ -243,7 +243,7 @@ export const updateUserProfile = async (data: UpdateUserProfileRequest): Promise
   // First check if this is our current user
   const storedUser = localStorage.getItem("gps_user");
   if (storedUser) {
-    const currentUser = JSON.parse(storedUser);
+    const currentUser = JSON.parse(storedUser) as User;
     if (currentUser.id === data.userId) {
       const updatedUser: User = {
         ...currentUser,
@@ -287,7 +287,7 @@ export const updateUserAvatar = async ({ userId, avatarFile }: UpdateUserAvatarR
   // First check if this is our current user
   const storedUser = localStorage.getItem("gps_user");
   if (storedUser) {
-    const currentUser = JSON.parse(storedUser);
+    const currentUser = JSON.parse(storedUser) as User;
     if (currentUser.id === userId) {
       // In a real app, we would upload the file to a server and get a URL back
       // For now, we'll just use a random avatar URL to simulate the change
@@ -329,7 +329,7 @@ export const updateEducation = async ({ userId, education }: UpdateEducationRequ
   // First check if this is our current user
   const storedUser = localStorage.getItem("gps_user");
   if (storedUser) {
-    const currentUser = JSON.parse(storedUser);
+    const currentUser = JSON.parse(storedUser) as User;
     if (currentUser.id === userId) {
       // Check if education array exists, if not, create it
       const currentEducation = currentUser.education || [];
@@ -403,7 +403,7 @@ export const deleteEducation = async (userId: number, educationId: number): Prom
   // First check if this is our current user
   const storedUser = localStorage.getItem("gps_user");
   if (storedUser) {
-    const currentUser = JSON.parse(storedUser);
+    const currentUser = JSON.parse(storedUser) as User;
     if (currentUser.id === userId) {
       if (!currentUser.education) {
         throw new Error("Education not found");
@@ -445,7 +445,7 @@ export const updateExperience = async ({ userId, experience }: UpdateExperienceR
   // First check if this is our current user
   const storedUser = localStorage.getItem("gps_user");
   if (storedUser) {
-    const currentUser = JSON.parse(storedUser);
+    const currentUser = JSON.parse(storedUser) as User;
     if (currentUser.id === userId) {
       // Check if experience array exists, if not, create it
       const currentExperience = currentUser.experience || [];
@@ -519,7 +519,7 @@ export const deleteExperience = async (userId: number, experienceId: number): Pr
   // First check if this is our current user
   const storedUser = localStorage.getItem("gps_user");
   if (storedUser) {
-    const currentUser = JSON.parse(storedUser);
+    const currentUser = JSON.parse(storedUser) as User;
     if (currentUser.id === userId) {
       if (!currentUser.experience) {
         throw new Error("Experience not found");
@@ -561,7 +561,7 @@ export const uploadResume = async ({ userId, resumeFile }: { userId: number, res
   // First check if this is our current user
   const storedUser = localStorage.getItem("gps_user");
   if (storedUser) {
-    const currentUser = JSON.parse(storedUser);
+    const currentUser = JSON.parse(storedUser) as User;
     if (currentUser.id === userId) {
       // In a real app, we would upload the file to a server and get a URL back
       // For now, we'll just use a mock URL
@@ -603,7 +603,7 @@ export const deleteResume = async (userId: number): Promise<User> => {
   // First check if this is our current user
   const storedUser = localStorage.getItem("gps_user");
   if (storedUser) {
-    const currentUser = JSON.parse(storedUser);
+    const currentUser = JSON.parse(storedUser) as User;
     if (currentUser.id === userId) {
       const updatedUser: User = {
         ...currentUser,
