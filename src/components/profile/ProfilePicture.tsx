@@ -55,6 +55,14 @@ const ProfilePicture = ({ user, onUpdate }: ProfilePictureProps) => {
       setImageKey(Date.now());
       onUpdate(updatedUser);
       
+      // Also update localStorage to ensure the avatar persists
+      const storedUser = localStorage.getItem("gps_user");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        parsedUser.avatar = updatedUser.avatar;
+        localStorage.setItem("gps_user", JSON.stringify(parsedUser));
+      }
+      
       toast({
         title: "Profile picture updated",
         description: "Your profile picture has been successfully updated",

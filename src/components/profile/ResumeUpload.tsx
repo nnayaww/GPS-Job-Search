@@ -50,6 +50,15 @@ const ResumeUpload = ({ user, onUpdate }: ResumeUploadProps) => {
         resumeFile: file
       });
       
+      // Update localStorage to ensure the resume persists
+      const storedUser = localStorage.getItem("gps_user");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        parsedUser.resume = updatedUser.resume;
+        parsedUser.resumeUpdated = updatedUser.resumeUpdated;
+        localStorage.setItem("gps_user", JSON.stringify(parsedUser));
+      }
+      
       onUpdate(updatedUser);
       
       toast({
@@ -76,6 +85,15 @@ const ResumeUpload = ({ user, onUpdate }: ResumeUploadProps) => {
       
       const updatedUser = await deleteResume(user.id);
       
+      // Update localStorage to ensure the resume deletion persists
+      const storedUser = localStorage.getItem("gps_user");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        delete parsedUser.resume;
+        delete parsedUser.resumeUpdated;
+        localStorage.setItem("gps_user", JSON.stringify(parsedUser));
+      }
+      
       onUpdate(updatedUser);
       
       toast({
@@ -98,17 +116,16 @@ const ResumeUpload = ({ user, onUpdate }: ResumeUploadProps) => {
     fileInputRef.current?.click();
   };
 
-  // Since we can't access the actual file directly in this demo app,
-  // we'll simulate opening a new window with the resume URL
   const handleViewResume = () => {
     if (user.resume) {
-      window.open(user.resume, '_blank', 'noopener,noreferrer');
-      
-      // For demo purpose, show a toast that explains what would happen in a real app
+      // For demo purposes, just show a toast with the URL
       toast({
-        title: "Resume Viewer",
-        description: "In a production app, this would open your actual uploaded resume",
+        title: "Resume URL",
+        description: `Viewing resume: ${user.resume}`,
       });
+      
+      // In a real app, this would open the resume in a new tab
+      window.open(user.resume, '_blank', 'noopener,noreferrer');
     }
   };
 

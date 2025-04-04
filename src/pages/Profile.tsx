@@ -1,10 +1,9 @@
-
-import { useState, useMemo } from "react";
-import { Navigate } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { Navigate, Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Briefcase, BookOpen, GraduationCap, Plus, FileText, Award, Edit, Trash2 } from "lucide-react";
+import { Briefcase, BookOpen, GraduationCap, Plus, FileText, Edit, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Education, Experience, User } from "@/types/user";
@@ -22,6 +21,7 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [educationForm, setEducationForm] = useState({ isOpen: false, isEdit: false, data: null as Education | null });
   const [experienceForm, setExperienceForm] = useState({ isOpen: false, isEdit: false, data: null as Experience | null });
+  const [profileCompletionPercentage, setProfileCompletionPercentage] = useState(0);
   
   // Redirect if not authenticated
   if (isLoading) {
@@ -32,40 +32,58 @@ const Profile = () => {
     return <Navigate to="/login" />;
   }
 
+  // Calculate profile completion percentage whenever user data changes
+  useEffect(() => {
+    if (user) {
+      const percentage = calculateProfileCompletion(user);
+      setProfileCompletionPercentage(percentage);
+    }
+  }, [user]);
+
   // Calculate profile completion percentage
   const calculateProfileCompletion = (user: User): number => {
     let totalFields = 0;
     let completedFields = 0;
     
-    // Basic profile fields
-    const basicFields = ['name', 'email', 'bio', 'location', 'phoneNumber', 'headline', 'avatar'];
-    totalFields += basicFields.length;
-    
-    for (const field of basicFields) {
-      if (user[field as keyof User]) completedFields++;
+    // Different completion criteria based on user role
+    if (user.role === 'employer') {
+      // Basic profile fields for employer
+      const basicFields = ['name', 'email', 'bio', 'location', 'phoneNumber', 'avatar'];
+      totalFields += basicFields.length;
+      
+      for (const field of basicFields) {
+        if (user[field as keyof User]) completedFields++;
+      }
+    } else {
+      // Basic profile fields for student
+      const basicFields = ['name', 'email', 'bio', 'location', 'phoneNumber', 'headline', 'avatar'];
+      totalFields += basicFields.length;
+      
+      for (const field of basicFields) {
+        if (user[field as keyof User]) completedFields++;
+      }
+      
+      // Education
+      totalFields += 1; // Count education as 1 field
+      if (user.education && user.education.length > 0) completedFields += 1;
+      
+      // Experience
+      totalFields += 1; // Count experience as 1 field
+      if (user.experience && user.experience.length > 0) completedFields += 1;
+      
+      // Resume
+      totalFields += 1;
+      if (user.resume) completedFields += 1;
     }
-    
-    // Education
-    totalFields += 1; // Count education as 1 field
-    if (user.education && user.education.length > 0) completedFields += 1;
-    
-    // Experience
-    totalFields += 1; // Count experience as 1 field
-    if (user.experience && user.experience.length > 0) completedFields += 1;
-    
-    // Resume
-    totalFields += 1;
-    if (user.resume) completedFields += 1;
     
     const completionPercentage = Math.round((completedFields / totalFields) * 100);
     return completionPercentage;
   };
   
-  const profileCompletionPercentage = calculateProfileCompletion(user);
-  
   const handleUpdateProfile = (updatedUser: User) => {
     updateUserState(updatedUser);
     setIsEditing(false);
+    // Profile completion will be recalculated via the useEffect
   };
   
   const openAddEducationForm = () => {
@@ -232,6 +250,13 @@ const Profile = () => {
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Profile
                   </Button>
+                  
+                  <Link to="/jobs" className="w-full mt-4">
+                    <Button variant="outline" className="w-full">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Browse Jobs
+                    </Button>
+                  </Link>
                 </div>
                 
                 <div className="mt-8">

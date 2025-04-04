@@ -36,7 +36,10 @@ const Register = () => {
     setIsLoading(true);
     
     try {
-      await registerUser(data.name, data.email, data.password, data.role);
+      // Make sure the role is properly typed and stored
+      const userRole = data.role as "student" | "employer";
+      await registerUser(data.name, data.email, data.password, userRole);
+      
       toast({
         title: "Registration successful",
         description: "Your account has been created",
