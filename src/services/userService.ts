@@ -78,13 +78,13 @@ export const fetchUsers = async (): Promise<User[]> => {
   
   // For demo purposes, return mock data
   // In production, this would be a real API call
-  const mockUsers = [
+  const mockUsers: User[] = [
     {
       id: 1,
       name: "Alex Johnson",
       email: "alex.johnson@example.com",
-      role: "student",
-      status: "active",
+      role: "student" as const,
+      status: "active" as const,
       joined: "2023-03-15",
       avatar: "https://i.pravatar.cc/150?u=alex.johnson@example.com",
       bio: "Computer Science graduate with a passion for web development.",
@@ -97,8 +97,8 @@ export const fetchUsers = async (): Promise<User[]> => {
       id: 2,
       name: "Sarah Miller",
       email: "sarah.miller@example.com",
-      role: "employer",
-      status: "active",
+      role: "employer" as const,
+      status: "active" as const,
       joined: "2023-02-28",
       avatar: "https://i.pravatar.cc/150?u=sarah.miller@example.com",
       bio: "HR Manager at TechCorp Solutions",
@@ -108,8 +108,8 @@ export const fetchUsers = async (): Promise<User[]> => {
       id: 3,
       name: "James Wilson",
       email: "james.wilson@example.com",
-      role: "student",
-      status: "inactive",
+      role: "student" as const,
+      status: "inactive" as const,
       joined: "2023-04-10",
       avatar: "https://i.pravatar.cc/150?u=james.wilson@example.com",
       bio: "Recent graduate seeking opportunities in data analysis",
@@ -122,8 +122,8 @@ export const fetchUsers = async (): Promise<User[]> => {
       id: 4,
       name: "Emma Davis",
       email: "emma.davis@example.com",
-      role: "student",
-      status: "active",
+      role: "student" as const,
+      status: "active" as const,
       joined: "2023-01-20",
       avatar: "https://i.pravatar.cc/150?u=emma.davis@example.com",
       bio: "Marketing student with design skills",
@@ -136,8 +136,8 @@ export const fetchUsers = async (): Promise<User[]> => {
       id: 5,
       name: "Michael Brown",
       email: "michael.brown@example.com",
-      role: "employer",
-      status: "active",
+      role: "employer" as const,
+      status: "active" as const,
       joined: "2023-03-05",
       avatar: "https://i.pravatar.cc/150?u=michael.brown@example.com",
       bio: "Technical Recruiter at Global Marketing Inc.",
@@ -147,8 +147,8 @@ export const fetchUsers = async (): Promise<User[]> => {
       id: 6,
       name: "David Clark",
       email: "david.clark@example.com",
-      role: "admin",
-      status: "active",
+      role: "admin" as const,
+      status: "active" as const,
       joined: "2022-11-18",
       avatar: "https://i.pravatar.cc/150?u=david.clark@example.com",
       bio: "System Administrator and Developer",
@@ -161,7 +161,7 @@ export const fetchUsers = async (): Promise<User[]> => {
 
   // If we have a current user, add or replace it in the mockUsers array
   if (currentUser) {
-    const userIndex = mockUsers.findIndex(u => u.id === currentUser.id);
+    const userIndex = mockUsers.findIndex(u => u.id === currentUser!.id);
     if (userIndex >= 0) {
       mockUsers[userIndex] = currentUser;
     } else {
@@ -181,7 +181,7 @@ export const updateUserStatus = async ({ userId, status }: UpdateUserStatusReque
   if (storedUser) {
     const currentUser = JSON.parse(storedUser);
     if (currentUser.id === userId) {
-      const updatedUser = {
+      const updatedUser: User = {
         ...currentUser,
         status
       };
@@ -213,7 +213,7 @@ export const updateUserRole = async ({ userId, role }: UpdateUserRoleRequest): P
   if (storedUser) {
     const currentUser = JSON.parse(storedUser);
     if (currentUser.id === userId) {
-      const updatedUser = {
+      const updatedUser: User = {
         ...currentUser,
         role
       };
@@ -245,14 +245,14 @@ export const updateUserProfile = async (data: UpdateUserProfileRequest): Promise
   if (storedUser) {
     const currentUser = JSON.parse(storedUser);
     if (currentUser.id === data.userId) {
-      const updatedUser = {
+      const updatedUser: User = {
         ...currentUser,
         name: data.name || currentUser.name,
         email: data.email || currentUser.email,
-        bio: data.bio || currentUser.bio,
-        location: data.location || currentUser.location,
-        phoneNumber: data.phoneNumber || currentUser.phoneNumber,
-        headline: data.headline || currentUser.headline,
+        bio: data.bio !== undefined ? data.bio : currentUser.bio,
+        location: data.location !== undefined ? data.location : currentUser.location,
+        phoneNumber: data.phoneNumber !== undefined ? data.phoneNumber : currentUser.phoneNumber,
+        headline: data.headline !== undefined ? data.headline : currentUser.headline,
         skills: data.skills || currentUser.skills
       };
       return updatedUser;
@@ -272,10 +272,10 @@ export const updateUserProfile = async (data: UpdateUserProfileRequest): Promise
     ...user,
     name: data.name || user.name,
     email: data.email || user.email,
-    bio: data.bio || user.bio,
-    location: data.location || user.location,
-    phoneNumber: data.phoneNumber || user.phoneNumber,
-    headline: data.headline || user.headline,
+    bio: data.bio !== undefined ? data.bio : user.bio,
+    location: data.location !== undefined ? data.location : user.location,
+    phoneNumber: data.phoneNumber !== undefined ? data.phoneNumber : user.phoneNumber,
+    headline: data.headline !== undefined ? data.headline : user.headline,
     skills: data.skills || user.skills
   };
 };
@@ -294,7 +294,7 @@ export const updateUserAvatar = async ({ userId, avatarFile }: UpdateUserAvatarR
       const timestamp = new Date().getTime(); // Add timestamp to force browser to reload the image
       const newAvatarUrl = `https://i.pravatar.cc/150?u=${currentUser.email}&t=${timestamp}`;
       
-      const updatedUser = {
+      const updatedUser: User = {
         ...currentUser,
         avatar: newAvatarUrl
       };
@@ -352,7 +352,7 @@ export const updateEducation = async ({ userId, education }: UpdateEducationRequ
         updatedEducation = [...currentEducation, education];
       }
       
-      const updatedUser = {
+      const updatedUser: User = {
         ...currentUser,
         education: updatedEducation
       };
@@ -412,7 +412,7 @@ export const deleteEducation = async (userId: number, educationId: number): Prom
       // Filter out the education to delete
       const updatedEducation = currentUser.education.filter(e => e.id !== educationId);
       
-      const updatedUser = {
+      const updatedUser: User = {
         ...currentUser,
         education: updatedEducation
       };
@@ -468,7 +468,7 @@ export const updateExperience = async ({ userId, experience }: UpdateExperienceR
         updatedExperience = [...currentExperience, experience];
       }
       
-      const updatedUser = {
+      const updatedUser: User = {
         ...currentUser,
         experience: updatedExperience
       };
@@ -528,7 +528,7 @@ export const deleteExperience = async (userId: number, experienceId: number): Pr
       // Filter out the experience to delete
       const updatedExperience = currentUser.experience.filter(e => e.id !== experienceId);
       
-      const updatedUser = {
+      const updatedUser: User = {
         ...currentUser,
         experience: updatedExperience
       };
@@ -567,7 +567,7 @@ export const uploadResume = async ({ userId, resumeFile }: { userId: number, res
       // For now, we'll just use a mock URL
       const resumeUrl = `https://example.com/resumes/${userId}/${resumeFile.name}`;
       
-      const updatedUser = {
+      const updatedUser: User = {
         ...currentUser,
         resume: resumeUrl,
         resumeUpdated: new Date().toISOString()
@@ -605,7 +605,7 @@ export const deleteResume = async (userId: number): Promise<User> => {
   if (storedUser) {
     const currentUser = JSON.parse(storedUser);
     if (currentUser.id === userId) {
-      const updatedUser = {
+      const updatedUser: User = {
         ...currentUser,
         resume: undefined,
         resumeUpdated: undefined
