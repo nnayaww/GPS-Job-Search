@@ -117,10 +117,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // For demo purposes, create a new user
       // In a real app, this would be an API call to your backend
       const userData: User = {
-        id: Math.floor(Math.random() * 1000),
+        id: Math.floor(Math.random() * 1000) + 10, // Generate random ID that won't conflict with hardcoded users
         name,
         email,
-        role,
+        role, // Make sure we use the role parameter passed to the function
         status: "active",
         joined: new Date().toISOString(),
         avatar: `https://i.pravatar.cc/150?u=${email}`

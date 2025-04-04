@@ -51,15 +51,34 @@ export interface Application {
   notes?: string;
 }
 
+// Get the currently logged-in user ID from localStorage
+const getCurrentUserId = (): number | null => {
+  const storedUser = localStorage.getItem("gps_user");
+  if (storedUser) {
+    const user = JSON.parse(storedUser);
+    return user.id;
+  }
+  return null;
+};
+
 // Mock API implementation with simulated delay
 // In production, this would use fetch() or axios to make real API calls
 export const fetchUsers = async (): Promise<User[]> => {
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 800));
   
+  // Get the current user from localStorage to include in the results
+  const currentUserId = getCurrentUserId();
+  const storedUser = localStorage.getItem("gps_user");
+  let currentUser: User | null = null;
+
+  if (storedUser) {
+    currentUser = JSON.parse(storedUser);
+  }
+  
   // For demo purposes, return mock data
   // In production, this would be a real API call
-  return [
+  const mockUsers = [
     {
       id: 1,
       name: "Alex Johnson",
@@ -139,13 +158,38 @@ export const fetchUsers = async (): Promise<User[]> => {
       headline: "IT Manager"
     }
   ];
+
+  // If we have a current user, add or replace it in the mockUsers array
+  if (currentUser) {
+    const userIndex = mockUsers.findIndex(u => u.id === currentUser.id);
+    if (userIndex >= 0) {
+      mockUsers[userIndex] = currentUser;
+    } else {
+      mockUsers.push(currentUser);
+    }
+  }
+
+  return mockUsers;
 };
 
 export const updateUserStatus = async ({ userId, status }: UpdateUserStatusRequest): Promise<User> => {
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 600));
   
-  // Fetch the mock user data
+  // First check if this is our current user
+  const storedUser = localStorage.getItem("gps_user");
+  if (storedUser) {
+    const currentUser = JSON.parse(storedUser);
+    if (currentUser.id === userId) {
+      const updatedUser = {
+        ...currentUser,
+        status
+      };
+      return updatedUser;
+    }
+  }
+  
+  // If not the current user, check mock data
   const users = await fetchUsers();
   const user = users.find(user => user.id === userId);
   
@@ -164,7 +208,20 @@ export const updateUserRole = async ({ userId, role }: UpdateUserRoleRequest): P
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 600));
   
-  // Fetch the mock user data
+  // First check if this is our current user
+  const storedUser = localStorage.getItem("gps_user");
+  if (storedUser) {
+    const currentUser = JSON.parse(storedUser);
+    if (currentUser.id === userId) {
+      const updatedUser = {
+        ...currentUser,
+        role
+      };
+      return updatedUser;
+    }
+  }
+  
+  // If not the current user, check mock data
   const users = await fetchUsers();
   const user = users.find(user => user.id === userId);
   
@@ -183,7 +240,26 @@ export const updateUserProfile = async (data: UpdateUserProfileRequest): Promise
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 800));
   
-  // Fetch the mock user data
+  // First check if this is our current user
+  const storedUser = localStorage.getItem("gps_user");
+  if (storedUser) {
+    const currentUser = JSON.parse(storedUser);
+    if (currentUser.id === data.userId) {
+      const updatedUser = {
+        ...currentUser,
+        name: data.name || currentUser.name,
+        email: data.email || currentUser.email,
+        bio: data.bio || currentUser.bio,
+        location: data.location || currentUser.location,
+        phoneNumber: data.phoneNumber || currentUser.phoneNumber,
+        headline: data.headline || currentUser.headline,
+        skills: data.skills || currentUser.skills
+      };
+      return updatedUser;
+    }
+  }
+  
+  // If not the current user, check mock data
   const users = await fetchUsers();
   const user = users.find(user => user.id === data.userId);
   
@@ -208,7 +284,25 @@ export const updateUserAvatar = async ({ userId, avatarFile }: UpdateUserAvatarR
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 1200));
   
-  // Fetch the mock user data
+  // First check if this is our current user
+  const storedUser = localStorage.getItem("gps_user");
+  if (storedUser) {
+    const currentUser = JSON.parse(storedUser);
+    if (currentUser.id === userId) {
+      // In a real app, we would upload the file to a server and get a URL back
+      // For now, we'll just use a random avatar URL to simulate the change
+      const timestamp = new Date().getTime(); // Add timestamp to force browser to reload the image
+      const newAvatarUrl = `https://i.pravatar.cc/150?u=${currentUser.email}&t=${timestamp}`;
+      
+      const updatedUser = {
+        ...currentUser,
+        avatar: newAvatarUrl
+      };
+      return updatedUser;
+    }
+  }
+  
+  // If not the current user, check mock data
   const users = await fetchUsers();
   const user = users.find(user => user.id === userId);
   
@@ -232,7 +326,41 @@ export const updateEducation = async ({ userId, education }: UpdateEducationRequ
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 600));
   
-  // Fetch the mock user data
+  // First check if this is our current user
+  const storedUser = localStorage.getItem("gps_user");
+  if (storedUser) {
+    const currentUser = JSON.parse(storedUser);
+    if (currentUser.id === userId) {
+      // Check if education array exists, if not, create it
+      const currentEducation = currentUser.education || [];
+      
+      // Find the index of the education to update if it exists
+      const index = currentEducation.findIndex(e => e.id === education.id);
+      
+      // Create a new education array with the updated or added education
+      let updatedEducation: Education[];
+      
+      if (index !== -1) {
+        // Update existing education
+        updatedEducation = [
+          ...currentEducation.slice(0, index),
+          education,
+          ...currentEducation.slice(index + 1)
+        ];
+      } else {
+        // Add new education
+        updatedEducation = [...currentEducation, education];
+      }
+      
+      const updatedUser = {
+        ...currentUser,
+        education: updatedEducation
+      };
+      return updatedUser;
+    }
+  }
+  
+  // If not the current user, check mock data
   const users = await fetchUsers();
   const user = users.find(user => user.id === userId);
   
@@ -272,7 +400,27 @@ export const deleteEducation = async (userId: number, educationId: number): Prom
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 600));
   
-  // Fetch the mock user data
+  // First check if this is our current user
+  const storedUser = localStorage.getItem("gps_user");
+  if (storedUser) {
+    const currentUser = JSON.parse(storedUser);
+    if (currentUser.id === userId) {
+      if (!currentUser.education) {
+        throw new Error("Education not found");
+      }
+      
+      // Filter out the education to delete
+      const updatedEducation = currentUser.education.filter(e => e.id !== educationId);
+      
+      const updatedUser = {
+        ...currentUser,
+        education: updatedEducation
+      };
+      return updatedUser;
+    }
+  }
+  
+  // If not the current user, check mock data
   const users = await fetchUsers();
   const user = users.find(user => user.id === userId);
   
@@ -294,7 +442,41 @@ export const updateExperience = async ({ userId, experience }: UpdateExperienceR
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 600));
   
-  // Fetch the mock user data
+  // First check if this is our current user
+  const storedUser = localStorage.getItem("gps_user");
+  if (storedUser) {
+    const currentUser = JSON.parse(storedUser);
+    if (currentUser.id === userId) {
+      // Check if experience array exists, if not, create it
+      const currentExperience = currentUser.experience || [];
+      
+      // Find the index of the experience to update if it exists
+      const index = currentExperience.findIndex(e => e.id === experience.id);
+      
+      // Create a new experience array with the updated or added experience
+      let updatedExperience: Experience[];
+      
+      if (index !== -1) {
+        // Update existing experience
+        updatedExperience = [
+          ...currentExperience.slice(0, index),
+          experience,
+          ...currentExperience.slice(index + 1)
+        ];
+      } else {
+        // Add new experience
+        updatedExperience = [...currentExperience, experience];
+      }
+      
+      const updatedUser = {
+        ...currentUser,
+        experience: updatedExperience
+      };
+      return updatedUser;
+    }
+  }
+  
+  // If not the current user, check mock data
   const users = await fetchUsers();
   const user = users.find(user => user.id === userId);
   
@@ -334,7 +516,27 @@ export const deleteExperience = async (userId: number, experienceId: number): Pr
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 600));
   
-  // Fetch the mock user data
+  // First check if this is our current user
+  const storedUser = localStorage.getItem("gps_user");
+  if (storedUser) {
+    const currentUser = JSON.parse(storedUser);
+    if (currentUser.id === userId) {
+      if (!currentUser.experience) {
+        throw new Error("Experience not found");
+      }
+      
+      // Filter out the experience to delete
+      const updatedExperience = currentUser.experience.filter(e => e.id !== experienceId);
+      
+      const updatedUser = {
+        ...currentUser,
+        experience: updatedExperience
+      };
+      return updatedUser;
+    }
+  }
+  
+  // If not the current user, check mock data
   const users = await fetchUsers();
   const user = users.find(user => user.id === userId);
   
@@ -356,7 +558,25 @@ export const uploadResume = async ({ userId, resumeFile }: { userId: number, res
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 800));
   
-  // Fetch the mock user data
+  // First check if this is our current user
+  const storedUser = localStorage.getItem("gps_user");
+  if (storedUser) {
+    const currentUser = JSON.parse(storedUser);
+    if (currentUser.id === userId) {
+      // In a real app, we would upload the file to a server and get a URL back
+      // For now, we'll just use a mock URL
+      const resumeUrl = `https://example.com/resumes/${userId}/${resumeFile.name}`;
+      
+      const updatedUser = {
+        ...currentUser,
+        resume: resumeUrl,
+        resumeUpdated: new Date().toISOString()
+      };
+      return updatedUser;
+    }
+  }
+  
+  // If not the current user, check mock data
   const users = await fetchUsers();
   const user = users.find(user => user.id === userId);
   
@@ -380,7 +600,21 @@ export const deleteResume = async (userId: number): Promise<User> => {
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 600));
   
-  // Fetch the mock user data
+  // First check if this is our current user
+  const storedUser = localStorage.getItem("gps_user");
+  if (storedUser) {
+    const currentUser = JSON.parse(storedUser);
+    if (currentUser.id === userId) {
+      const updatedUser = {
+        ...currentUser,
+        resume: undefined,
+        resumeUpdated: undefined
+      };
+      return updatedUser;
+    }
+  }
+  
+  // If not the current user, check mock data
   const users = await fetchUsers();
   const user = users.find(user => user.id === userId);
   
